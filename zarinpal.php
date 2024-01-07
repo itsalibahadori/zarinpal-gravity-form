@@ -1004,12 +1004,6 @@ class Zarinpal_GF_Payment {
 	
 	public static function settings_page() {
 
-		if ( ! extension_loaded( 'soap' ) ) {
-			_e( 'ماژول soap بر روی سرور شما فعال نیست. برای استفاده از درگاه باید آن را فعال نمایید. با مدیر هاست تماس بگیرید.', 'gravityformszarinpal' );
-
-			return;
-		}
-
 		if ( rgpost( "uninstall" ) ) {
 			check_admin_referer( "uninstall", "gf_zarinpal_uninstall" );
 			self::uninstall();
@@ -2120,29 +2114,18 @@ class Zarinpal_GF_Payment {
 
 		try {
 
-			$server = self::get_server();
-			if ( strtolower( $server ) == "german" ) {
-				$client = new SoapClient( 'https://de.zarinpal.com/pg/services/WebGate/wsdl', array( 'encoding' => 'UTF-8' ) );
-			} else {
-				$client = new SoapClient( 'https://ir.zarinpal.com/pg/services/WebGate/wsdl', array( 'encoding' => 'UTF-8' ) );
-			}
+			$params = [
+				'merchant_id' => self::get_merchent(),
+				'amount' => $Amount,
+				'callback_url' => $ReturnPath,
+				'description' =>  $Description != '' ? $Description : __("پرداخت زرین پال برای فرم شماره : " .  $form['id'],'gravityformszarinpal'),
+			];
+	
+			$result = self::zarinpalPayment('request', $params);
 
-			$MerchantID = self::get_merchent();
+			if ($result['data']['code'] == 100 ) {
 
-			$Result = $client->PaymentRequest(
-				array(
-					'MerchantID'  => $MerchantID,
-					'Amount'      => $Amount,
-					'Description' => $Description,
-					'Email'       => $Email,
-					'Mobile'      => $Mobile,
-					'CallbackURL' => $ReturnPath
-				)
-			);
-
-			if ( $Result->Status == 100 ) {
-
-				$Payment_URL = 'https://www.zarinpal.com/pg/StartPay/' . $Result->Authority;
+				$Payment_URL = 'https://www.zarinpal.com/pg/StartPay/' . $result['data']['authority'];
 
 				if ( $valid_checker ) {
 					return true;
@@ -2151,7 +2134,7 @@ class Zarinpal_GF_Payment {
 				}
 
 			} else {
-				$Message = self::Fault( $Result->Status );
+				$Message = self::Fault( $result['errors']['code']);
 			}
 		} catch ( Exception $ex ) {
 			$Message = $ex->getMessage();
@@ -2184,7 +2167,6 @@ class Zarinpal_GF_Payment {
 	}
 
 
-	// #5
 	public static function Verify() {
 
 		if ( apply_filters( 'gf_gateway_zarinpal_return', apply_filters( 'gf_gateway_verify_return', false ) ) ) {
@@ -2276,33 +2258,22 @@ class Zarinpal_GF_Payment {
 					$MerchantID = self::get_merchent();
 
 					try {
+						$params = [
+							'merchant_id' => $MerchantID,
+							'authority'  => $Authority,
+							'amount'     => $Amount
+						];
 
-						$server = self::get_server();
-						if ( strtolower( $server ) == "german" ) {
-							$client = new SoapClient( 'https://de.zarinpal.com/pg/services/WebGate/wsdl', array( 'encoding' => 'UTF-8' ) );
-						} else {
-							$client = new SoapClient( 'https://ir.zarinpal.com/pg/services/WebGate/wsdl', array( 'encoding' => 'UTF-8' ) );
-						}
-
-						$__params = $Amount . $Authority;
-						if ( GFPersian_Payments::check_verification( $entry, __CLASS__, $__params ) ) {
-							return;
-						}
-
-
-						$Result = $client->PaymentVerification(
-							array(
-								'MerchantID' => $MerchantID,
-								'Authority'  => $Authority,
-								'Amount'     => $Amount
-							)
-						);
-
-						if ( $Result->Status == 100 ) {
+						$result = self::zarinpalPayment('verify', $params);
+						
+						if ( $result['data'] &&  $result['data']['code'] === 100 ) {
+							$Message = '';
+							$Status  = 'completed';
+						} elseif ($result['data'] && $result['data']['code'] === 101) {
 							$Message = '';
 							$Status  = 'completed';
 						} else {
-							$Message = self::Fault( $Result->Status );
+							$Message = self::Fault( $result['errors']['code'] );
 							$Status  = 'failed';
 						}
 
@@ -2315,8 +2286,8 @@ class Zarinpal_GF_Payment {
 					$Message = '';
 					$Status  = 'cancelled';
 				}
-				$Transaction_ID = ! empty( $Result->RefID ) ? $Result->RefID : '-';
-				//End of ZarinPal
+				$Transaction_ID = ! empty($result['data']) ? $result['data']['ref_id'] : '-';
+				
 			} else {
 				$Status         = 'completed';
 				$Message        = '';
@@ -2444,7 +2415,6 @@ class Zarinpal_GF_Payment {
 	}
 
 
-	// #6
 	private static function Fault( $err_code ) {
 		$message = ' ';
 		switch ( $err_code ) {
@@ -2500,6 +2470,25 @@ class Zarinpal_GF_Payment {
 		}
 
 		return $message;
+	}
+
+	private static function zarinpalPayment($action, array $params)
+	{
+		$jsonData = json_encode($params);
+		$ch = curl_init("https://api.zarinpal.com/pg/v4/payment/$action.json");
+		curl_setopt($ch, CURLOPT_USERAGENT, 'ZarinPal Rest Api v4');
+		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+			'Content-Type: application/json',
+			'Content-Length: ' . strlen($jsonData)
+		));
+
+		$result = curl_exec($ch);
+		$result = json_decode($result, true, JSON_PRETTY_PRINT);
+		curl_close($ch);
+		return $result;
 	}
 
 }
