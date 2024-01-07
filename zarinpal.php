@@ -1015,7 +1015,7 @@ class Zarinpal_GF_Payment {
 			check_admin_referer( "update", "gf_zarinpal_update" );
 			$settings = array(
 				"merchent" => rgpost( 'gf_zarinpal_merchent' ),
-				"server"   => rgpost( 'gf_zarinpal_server' ),
+				"currency"   => rgpost( 'gf_zarinpal_currency' ),
 				"gname"    => rgpost( 'gf_zarinpal_gname' ),
 			);
 			update_option( "gf_zarinpal_settings", array_map( 'sanitize_text_field', $settings ) );
@@ -1076,17 +1076,17 @@ class Zarinpal_GF_Payment {
 
                 <tr>
                     <th scope="row"><label
-                                for="gf_zarinpal_server"><?php _e( "کشور سرور", "gravityformszarinpal" ); ?></label>
+                                for="gf_zarinpal_currency"><?php _e( "ارز درگاه", "gravityformszarinpal" ); ?></label>
                     </th>
                     <td>
 
-                        <input type="radio" name="gf_zarinpal_server"
-                               value="Iran" <?php echo rgar( $settings, 'server' ) == "Iran" ? "checked='checked'" : "" ?>/>
-						<?php _e( "ایران", "gravityformszarinpal" ); ?>
+                        <input type="radio" name="gf_zarinpal_currency" required
+                               value="IRT" <?php echo rgar( $settings, 'currency' ) == "IRT" ? "checked='checked'" : "" ?>/>
+						<?php _e( "تومان", "gravityformszarinpal" ); ?>
 
-                        <input type="radio" name="gf_zarinpal_server"
-                               value="German" <?php echo rgar( $settings, 'server' ) != "Iran" ? "checked='checked'" : "" ?>/>
-						<?php _e( "آلمان (پیشنهادی)", "gravityformszarinpal" ); ?>
+                        <input type="radio" name="gf_zarinpal_currency" required
+                               value="IRR" <?php echo rgar( $settings, 'currency' ) == "IRR" ? "checked='checked'" : "" ?>/>
+						<?php _e( "ریال", "gravityformszarinpal" ); ?>
 
                     </td>
                 </tr>
@@ -1186,9 +1186,9 @@ class Zarinpal_GF_Payment {
 	}
 
 	
-	private static function get_server() {
+	private static function get_currency() {
 		$settings = get_option( "gf_zarinpal_settings" );
-		$server   = isset( $settings["server"] ) ? $settings["server"] : '';
+		$server   = isset( $settings["currency"] ) ? $settings["currency"] : '';
 
 		return $server;
 	}
@@ -2118,6 +2118,7 @@ class Zarinpal_GF_Payment {
 				'merchant_id' => self::get_merchent(),
 				'amount' => $Amount,
 				'callback_url' => $ReturnPath,
+				'currency' => self::get_currency(),
 				'description' =>  $Description != '' ? $Description : __("پرداخت زرین پال برای فرم شماره : " .  $form['id'],'gravityformszarinpal'),
 			];
 	
@@ -2134,7 +2135,7 @@ class Zarinpal_GF_Payment {
 				}
 
 			} else {
-				$Message = self::Fault( $result['errors']['code']);
+				$Message = self::Fault($result['errors']['code']);
 			}
 		} catch ( Exception $ex ) {
 			$Message = $ex->getMessage();
@@ -2142,7 +2143,7 @@ class Zarinpal_GF_Payment {
 
 		$Message = ! empty( $Message ) ? $Message : __( 'خطایی رخ داده است.', 'gravityformszarinpal' );
 
-		$confirmation = __( 'متاسفانه نمیتوانیم به درگاه متصل شویم. علت : ', 'gravityformszarinpal' ) . $Message;
+		$confirmation = __( 'متاسفانه نمیتوانیم به درگاه متصل شویم. علت : </br>', 'gravityformszarinpal' ) . $Message;
 
 		if ( $valid_checker ) {
 			return $Message;
