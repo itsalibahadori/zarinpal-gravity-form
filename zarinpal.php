@@ -2135,7 +2135,7 @@ class Zarinpal_GF_Payment {
 				}
 
 			} else {
-				$Message = self::Fault($result['errors']['code']);
+				$Message = self::error_message($result['errors']['code']);
 			}
 		} catch ( Exception $ex ) {
 			$Message = $ex->getMessage();
@@ -2274,7 +2274,7 @@ class Zarinpal_GF_Payment {
 							$Message = '';
 							$Status  = 'completed';
 						} else {
-							$Message = self::Fault( $result['errors']['code'] );
+							$Message = self::error_message( $result['errors']['code'] );
 							$Status  = 'failed';
 						}
 
@@ -2416,63 +2416,89 @@ class Zarinpal_GF_Payment {
 	}
 
 
-	private static function Fault( $err_code ) {
-		$message = ' ';
-		switch ( $err_code ) {
+    /**
+     * Zarinpal error message.
+     * 
+     * @param int $code
+     * @return string
+     */
+    public static function error_message($code)
+    {
+        $message = null;
 
-			case '-1' :
-				$message = __( 'اطلاعات ارسال شده ناقص است .', 'gravityformszarinpal' );
-				break;
+        switch ($code) {
+            case $code == -9:
+                $message = ('اطلاعات ارسال شده نادرست می باشد.');
+                $message .= "<br>" . ('1- مرچنت کد داخل تنظیمات وارد نشده باشد');
+                $message .= "<br>" . ('2- مبلغ پرداختی کمتر یا بیشتر از حد مجاز می باشد');
+            break; 
+            case $code == -10:
+                $message = ('ای پی یا مرچنت كد پذیرنده صحیح نیست.');
+            break; 
+            case $code == -11:
+                $message = ('مرچنت کد فعال نیست، پذیرنده مشکل خود را به امور مشتریان زرین‌پال ارجاع دهد.');
+            break; 
+            case $code == -12:
+                $message = ('تلاش بیش از دفعات مجاز در یک بازه زمانی کوتاه به امور مشتریان زرین پال اطلاع دهید');
+            break; 
+            case $code == -15:
+                $message = ('درگاه پرداخت به حالت تعلیق در آمده است، پذیرنده مشکل خود را به امور مشتریان زرین‌پال ارجاع دهد.');
+            break; 
+            case $code == -16:
+                $message = ('سطح تایید پذیرنده پایین تر از سطح نقره ای است.');
+            break; 
+            case $code == -17:
+                $message = ('محدودیت پذیرنده در سطح آبی');
+            break; 
+            case $code == -30:
+                $message = ('پذیرنده اجازه دسترسی به سرویس تسویه اشتراکی شناور را ندارد.');
+            break; 
+            case $code == -31:
+                $message = ('حساب بانکی تسویه را به پنل اضافه کنید. مقادیر وارد شده برای تسهیم درست نیست. پذیرنده جهت استفاده از خدمات سرویس تسویه اشتراکی شناور، باید حساب بانکی معتبری به پنل کاربری خود اضافه نماید.');
+            break; 
+            case $code == -32:
+                $message = ('مبلغ وارد شده از مبلغ کل تراکنش بیشتر است.');
+            break; 
+            case $code == -33:
+                $message = ('درصدهای وارد شده صحیح نیست.');
+            break; 
+            case $code == -34:
+                $message = ('مبلغ وارد شده از مبلغ کل تراکنش بیشتر است.');
+            break; 
+            case $code == -35:
+                $message = ('تعداد افراد دریافت کننده تسهیم بیش از حد مجاز است.');
+            break; 
+            case $code == -36:
+                $message = ('حداقل مبلغ جهت تسهیم باید 10000 ریال باشد');
+            break; 
+            case $code == -37:
+                $message = ('یک یا چند شماره شبای وارد شده برای تسهیم از سمت بانک غیر فعال است.');
+            break; 
+            case $code == -38:
+                $message = ('خط،عدم تعریف صحیح شبا،لطفا دقایقی دیگر تلاش کنید.');
+            break; 
+            case $code == -39:
+                $message = ('خطایی رخ داده است به امور مشتریان زرین پال اطلاع دهید');
+            break; 
+            case $code == -50:
+                $message = ('مبلغ پرداخت شده با مقدار مبلغ ارسالی در متد وریفای متفاوت است.');
+            break; 
+            case $code == -51:
+                $message = ('پرداخت ناموفق');
+            break; 
+            case $code == -52:
+                $message = ('خطای غیر منتظره‌ای رخ داده است. پذیرنده مشکل خود را به امور مشتریان زرین‌پال ارجاع دهد.');
+            break; 
+            case $code == -53:
+                $message = ('پرداخت متعلق به این مرچنت کد نیست.');
+            break; 
+            case $code == -54:
+                $message = ('اتوریتی نامعتبر است.');
+            break;
+        }
 
-			case '-2' :
-				$message = __( 'آی پی یا مرچنت زرین پال اشتباه است .', 'gravityformszarinpal' );
-				break;
-
-			case '-3' :
-				$message = __( 'با توجه به محدودیت های شاپرک امکان پرداخت با رقم درخواست شده میسر نمیباشد .', 'gravityformszarinpal' );
-				break;
-
-			case '-4' :
-				$message = __( 'سطح تایید پذیرنده پایین تر از سطح نقره ای میباشد .', 'gravityformszarinpal' );
-				break;
-
-			case '-11' :
-				$message = __( 'درخواست مورد نظر یافت نشد .', 'gravityformszarinpal' );
-				break;
-
-			case '-21' :
-				$message = __( 'هیچ نوع عملیات مالی برای این تراکنش یافت نشد .', 'gravityformszarinpal' );
-				break;
-
-			case '-22' :
-				$message = __( 'تراکنش نا موفق میباشد .', 'gravityformszarinpal' );
-				break;
-
-			case '-33' :
-				$message = __( 'رقم تراکنش با رقم وارد شده مطابقت ندارد .', 'gravityformszarinpal' );
-				break;
-
-			case '-40' :
-				$message = __( 'اجازه دسترسی به متد مورد نظر وجود ندارد .', 'gravityformszarinpal' );
-				break;
-
-			case '-54' :
-				$message = __( 'درخواست مورد نظر آرشیو شده است .', 'gravityformszarinpal' );
-				break;
-
-			case '100' :
-				$message = __( 'اتصال با زرین پال به خوبی برقرار شد و همه چیز صحیح است .', 'gravityformszarinpal' );
-				break;
-
-			case '101' :
-				$message = __( 'تراکنش با موفقیت به پایان رسیده بود و تاییدیه آن نیز انجام شده بود .', 'gravityformszarinpal' );
-				break;
-
-		}
-
-		return $message;
-	}
-
+        return $message;
+    }
 	private static function zarinpalPayment($action, array $params)
 	{
 		$jsonData = json_encode($params);
