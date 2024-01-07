@@ -1,0 +1,5 @@
+### Version 2.8.0:
+- Fix a bug in returning from the gateway.
+- Add currency [IRT, IRR] to module setting and payment request.
+- Remove usage of soap and use rest for module request instead.
+- Update payment error message.

@@ -12,5 +12,4 @@
   - Add currency [IRT, IRR] to module setting and payment request.
   - Remove usage of soap and use rest for module request instead.
   - Update payment error message.
-
-  
+  - Fix a bug in returning from the gateway.
