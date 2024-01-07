@@ -2121,7 +2121,22 @@ class Zarinpal_GF_Payment {
 				'currency' => self::get_currency(),
 				'description' =>  $Description != '' ? $Description : __("پرداخت زرین پال برای فرم شماره : " .  $form['id'],'gravityformszarinpal'),
 			];
+
+			if ($Mobile !== '' || $Email !== '') {
+				$metadata['metadata'] = [];
 	
+				if ($Mobile !== '') {
+					array_push($metadata['metadata'], ['mobile' => $Mobile]);
+				}
+				if ($Email !== '') {
+					array_push($metadata['metadata'], ['email' => $Email]);
+				}
+
+				array_push($metadata['metadata'], ['order_id' => $form['id']]);
+	
+				$params = array_merge($params, $metadata);
+			}
+
 			$result = self::zarinpalPayment('request', $params);
 
 			if ($result['data']['code'] == 100 ) {
@@ -2246,12 +2261,6 @@ class Zarinpal_GF_Payment {
 
 			$free = false;
 			if ( empty( $_GET['no'] ) || $_GET['no'] != 'true' ) {
-
-				//Start of ZarinPal
-				if ( $payment_type != 'custom' ) {
-					$Amount = GFPersian_Payments::amount( $Amount, 'IRT', $form, $entry );
-				}
-
 
 				if ( isset( $_GET['Status'] ) && strtolower( $_GET['Status'] ) == 'ok' ) {
 
@@ -2499,6 +2508,7 @@ class Zarinpal_GF_Payment {
 
         return $message;
     }
+
 	private static function zarinpalPayment($action, array $params)
 	{
 		$jsonData = json_encode($params);
@@ -2517,5 +2527,4 @@ class Zarinpal_GF_Payment {
 		curl_close($ch);
 		return $result;
 	}
-
 }
