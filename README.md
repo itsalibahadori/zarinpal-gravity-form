@@ -2,7 +2,7 @@
 
 ## Installation :
   - Install GFPersion on your wordpress.
-  - Download latest version of module from [Relases]().
+  - Download latest version of module from [Relases](https://github.com/AliBahadori41/zarinpal-gravity-form/releases/).
 
 > [!IMPORTANT]
 >  To use module GFPersion must be installed and actived in your wordpress.
