@@ -5,7 +5,7 @@
   - Download latest version of module from [Relases](https://github.com/AliBahadori41/zarinpal-gravity-form/releases/).
 
 > [!IMPORTANT]
->  To use module GFPersion must be installed and activated in your wordpress.
+>  To use gravity forms module, GFPersion module must be installed and activated in your wordpress.
 
 
 ## Changelog
